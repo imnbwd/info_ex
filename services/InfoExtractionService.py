@@ -63,8 +63,8 @@ class InfoExtractionService:
         for index, content in pdf_data.data.items():
             extract_result[index] = uie_helper.extract(content)
 
-        result =  Result(SUCCESS_CODE, "")
-        result.data = extract_result;
+        result = Result(SUCCESS_CODE, "")
+        result.data = extract_result
         return result
 
     def extract_info_from_json(self, items):
