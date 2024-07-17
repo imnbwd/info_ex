@@ -63,8 +63,8 @@ class InfoExtractionService:
         extract_result = {}
         for index, content in pdf_data.data.items():
             page_result = uie_helper.extract(content)
-            # logger.info(page_result)
-            if len(page_result) == 0:
+            logger.info(page_result)
+            if len(page_result) == 1 and len(page_result[0]) == 0:  # 空字典
                 continue
             extract_result[index] = page_result
 
