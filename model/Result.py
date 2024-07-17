@@ -14,5 +14,6 @@ class Result:
         return {
             'code': self.code,
             'success': self.success,
-            'message': self.message
+            'message': self.message,
+            'data': self.data
         }
