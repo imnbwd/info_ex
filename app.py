@@ -6,6 +6,11 @@ from services import InfoExtractionService
 app = Flask(__name__)
 
 
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify("OK")
+
+
 @app.route('/service', methods=['POST'])
 def service():
     service_id = request.args.get('id')
