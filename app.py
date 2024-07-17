@@ -14,14 +14,17 @@ def health():
 @app.route('/service', methods=['POST'])
 def service():
     service_id = request.args.get('id')
-    if service_id is not None and service_id != "":
-        if service_id == str(100):
-            info_extract_service = InfoExtractionService(request)
-            return jsonify(info_extract_service.get_result())
-        else:
-            return jsonify(Result(101, "ServiceId不正确").to_dict())
-    else:
+    if service_id is None or service_id == "":
         return jsonify(Result(100, "缺少ServiceId").to_dict())
+    if request.content_type != "application/json":
+        return jsonify(Result(100, "缺少请求内容").to_dict())
+
+    if service_id == str(100):
+        info_extract_service = InfoExtractionService(request)
+        result = info_extract_service.get_result()
+        return jsonify(result.to_dict())
+    else:
+        return jsonify(Result(101, "ServiceId不正确").to_dict())
 
 
 @app.errorhandler(Exception)

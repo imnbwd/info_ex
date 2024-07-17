@@ -15,7 +15,18 @@ class PdfData:
             json.dump(data_dict, json_file, ensure_ascii=False, indent=4)
 
     @staticmethod
-    def deserialize_from_json(file_path):
+    def deserialize_from_json(json_content):
+        data_dict = json.loads(json_content)
+
+        # 创建一个新的 PdfData 实例
+        pdf_data = PdfData()
+        # 动态地将读取到的数据赋值给实例的属性
+        for key, value in data_dict.items():
+            setattr(pdf_data, key, value)
+        return pdf_data
+
+    @staticmethod
+    def deserialize_from_file(file_path):
         # 从指定的 JSON 文件中读取数据
         with open(file_path, 'r', encoding='utf-8') as json_file:
             data_dict = json.load(json_file)

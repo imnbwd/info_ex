@@ -60,7 +60,7 @@ def extract_info_from_json(items):
         extracted_info = ExtractedInfo()
         extracted_info.file_path = file
         extracted_info.data = {}
-        pdata = PdfData.deserialize_from_json(file)
+        pdata = PdfData.deserialize_from_file(file)
         for index, content in pdata.data.items():
             print(content)
             if len(content) == 0:
