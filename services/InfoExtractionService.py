@@ -70,6 +70,7 @@ class InfoExtractionService:
 
         result = Result(SUCCESS_CODE, "")
         result.data = extract_result
+        logger.info(extract_result)
         return result
 
     def extract_info_from_json(self, items):
