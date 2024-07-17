@@ -5,6 +5,7 @@ from app_const import SUCCESS_CODE
 import requests
 import os
 import time
+from loguru import logger
 
 
 class InfoExtractionService:
@@ -61,7 +62,11 @@ class InfoExtractionService:
 
         extract_result = {}
         for index, content in pdf_data.data.items():
-            extract_result[index] = uie_helper.extract(content)
+            page_result = uie_helper.extract(content)
+            # logger.info(page_result)
+            if len(page_result) == 0:
+                continue
+            extract_result[index] = page_result
 
         result = Result(SUCCESS_CODE, "")
         result.data = extract_result
