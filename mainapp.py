@@ -1,11 +1,11 @@
-from utils.PdfReader import PdfReader as pr
+from utility.PdfReader import PdfReader as pr
 import os
 import time
-from utils.UieHelper import UieHelper
+from utility.UieHelper import UieHelper
 from pprint import pprint
 from model.PdfData import PdfData
 from model.ExtractedInfo import ExtractedInfo
-from utils.PdfAnalyser import PdfAnalyser
+from utility.PdfAnalyser import PdfAnalyser
 
 def get_pdf_files(pdf_dir):
     '''获取pdf招标文件'''

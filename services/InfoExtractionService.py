@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from model import Result, PdfData, ExtractedInfo
-from utils import PdfAnalyser, PdfReader, UieHelper
+from utility import PdfAnalyser, PdfReader, UieHelper
 from app_const import SUCCESS_CODE
 import requests
 import os
