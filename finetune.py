@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
 import os
 from dataclasses import dataclass, field
 from functools import partial
@@ -31,7 +30,6 @@ from paddlenlp.trainer import (
     get_last_checkpoint,
 )
 from paddlenlp.transformers import UIE, UIEM, AutoTokenizer, export_model
-from paddlenlp.utils.ie_utils import compute_metrics, uie_loss_func
 from paddlenlp.utils.log import logger
 
 
@@ -89,15 +87,9 @@ class ModelArguments:
 def main():
     parser = PdArgumentParser((ModelArguments, DataArguments, CompressionArguments))
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
-    training_args.label_names = ["start_positions", "end_positions"]
 
     if model_args.model_name_or_path in ["uie-m-base", "uie-m-large"]:
         model_args.multilingual = True
-    elif os.path.exists(os.path.join(model_args.model_name_or_path, "model_config.json")):
-        with open(os.path.join(model_args.model_name_or_path, "model_config.json")) as f:
-            init_class = json.load(f)["init_class"]
-        if init_class == "UIEM":
-            model_args.multilingual = True
 
     # Log model and data config
     training_args.print_config(model_args, "Model")
@@ -150,6 +142,31 @@ def main():
         data_collator = DataCollatorWithPadding(tokenizer, padding="longest")
     else:
         data_collator = DataCollatorWithPadding(tokenizer)
+
+    criterion = paddle.nn.BCELoss()
+
+    def uie_loss_func(outputs, labels):
+        start_ids, end_ids = labels
+        start_prob, end_prob = outputs
+        start_ids = paddle.cast(start_ids, "float32")
+        end_ids = paddle.cast(end_ids, "float32")
+        loss_start = criterion(start_prob, start_ids)
+        loss_end = criterion(end_prob, end_ids)
+        loss = (loss_start + loss_end) / 2.0
+        return loss
+
+    def compute_metrics(p):
+        metric = SpanEvaluator()
+        start_prob, end_prob = p.predictions
+        start_ids, end_ids = p.label_ids
+        metric.reset()
+
+        num_correct, num_infer, num_label = metric.compute(start_prob, end_prob, start_ids, end_ids)
+        metric.update(num_correct, num_infer, num_label)
+        precision, recall, f1 = metric.accumulate()
+        metric.reset()
+
+        return {"precision": precision, "recall": recall, "f1": f1}
 
     trainer = Trainer(
         model=model,
@@ -210,6 +227,8 @@ def main():
         if model_args.export_model_dir is None:
             model_args.export_model_dir = os.path.join(training_args.output_dir, "export")
         export_model(model=trainer.model, input_spec=input_spec, path=model_args.export_model_dir)
+        trainer.tokenizer.save_pretrained(model_args.export_model_dir)
+
     if training_args.do_compress:
 
         @paddle.no_grad()
