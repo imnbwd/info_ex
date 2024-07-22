@@ -6,7 +6,7 @@ class UieHelper:
 
     def __init__(self, schema=None):
         self.__schema = schema
-        self.__ie = Taskflow("information_extraction", schema=schema)
+        self.__ie = Taskflow("information_extraction", schema=schema, task_path ="../tm")
 
     @classmethod
     def get_instance(cls, schema=None):
