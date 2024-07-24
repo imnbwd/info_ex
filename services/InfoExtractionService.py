@@ -11,8 +11,7 @@ from loguru import logger
 class InfoExtractionService:
     """提取信息"""
 
-    def __init__(self, http_request):
-        self.request = http_request
+    def __init__(self):
         pass
 
     def get_json_from_url(self, url):
@@ -34,27 +33,20 @@ class InfoExtractionService:
         except requests.RequestException as e:
             return None, f"请求出错: {str(e)}"
 
-    def get_result(self):
-        """进行提取"""
-        request_body = self.request.json
-        if "options" not in request_body:
-            return Result(-1, "未指定要提取的内容")
-
-        schema = self.request.json["options"]
-        # 判断要提取的内容
-        is_valid_schema = schema is not None and isinstance(schema, list) and len(list(schema)) > 0
-        if not is_valid_schema:
-            return Result(-1, "未指定要提取的项目")
-
-        # 获取指定的url
-        if "url" not in request_body:
-            return Result(-1, "未指定要提取的项目")
+    def get_result(self, schema, url, notify_url, task_id):
+        """
+        信息提取
+        :param schema: 要提取的内容
+        :param url: 待提取的文件URL
+        :param notify_url: 提取完成后要通知的URL
+        :param task_id: 任务ID
+        :return: 无返回
+        """
 
         # 先从本地获取文件
         uie_helper = UieHelper.get_instance()
         uie_helper.set_schema(schema)
 
-        url = self.request.json["url"]
         json_data, msg = self.get_json_from_url(url)
         if json_data is None:
             return Result(-1, "获取要提取的文件内容失败")
@@ -68,10 +60,14 @@ class InfoExtractionService:
                 continue
             extract_result[index] = page_result
 
-        result = Result(SUCCESS_CODE, "")
-        result.data = extract_result
-        logger.info(extract_result)
-        return result
+        # logger.info(extract_result)
+
+        # 回调
+        try:
+            response = requests.post(notify_url, json={"task_id": task_id, "result": extract_result})
+            print(f"回调结果成功，task_id：{task_id}, 状态码: {response.status_code}")
+        except Exception as e:
+            print(f"回调请求失败，task_id: {task_id}，详细信息：{str(e)}")
 
     def extract_info_from_json(self, items):
         json_dir = "./data"

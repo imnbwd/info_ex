@@ -2,8 +2,10 @@ from flask import Flask, request, jsonify
 from model import Result
 from loguru import logger
 from services import InfoExtractionService
+from concurrent.futures import ThreadPoolExecutor
 
 app = Flask(__name__)
+executor = ThreadPoolExecutor(max_workers=10)  # 创建一个线程池，最大线程数为5
 
 
 @app.route('/health', methods=['GET'])
@@ -20,9 +22,33 @@ def service():
         return jsonify(Result(100, "缺少请求内容").to_dict())
 
     if service_id == str(100):
-        info_extract_service = InfoExtractionService(request)
-        result = info_extract_service.get_result()
-        return jsonify(result.to_dict())
+        # 提取服务
+
+        # 先检查请求内容
+        schema = request.json.get("options")
+        url = request.json.get("url")
+        notify_url = request.json.get("notify_url")
+        task_id = request.json.get("task_id")
+
+        check_result = None
+        if not schema or not url:
+            check_result = Result(-1, "缺少要提取的信息options或url")
+        if not notify_url or not task_id:
+            check_result = Result(-1, "缺少notify_url或task_id")
+
+        # 判断要提取的内容
+        is_valid_schema = isinstance(schema, list) and len(list(schema)) > 0
+        if not is_valid_schema:
+            check_result = Result(-1, "未指定要提取的项目")
+
+        if check_result is not None:
+            # 检查没通过
+            return jsonify(check_result.to_dict())
+
+        # 通过线程进行提取
+        info_extract_service = InfoExtractionService()
+        executor.submit(info_extract_service.get_result, schema, url, notify_url, task_id)
+        return jsonify(Result.default_success("请求成功").to_dict())
     else:
         return jsonify(Result(101, "ServiceId不正确").to_dict())
 
